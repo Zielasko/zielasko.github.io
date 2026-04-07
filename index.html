@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Website">
+    <title>Loading - Booting System</title>
+    <link rel="stylesheet" href="landing.css">
+  </head>
+  <body>
+    <main class="boot-shell" aria-live="polite">
+      <div class="yorha-overlay" aria-hidden="true">
+        <div class="yorha-overlay-inner"> <!-- https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/RISC-V-logo-square.svg/960px-RISC-V-logo-square.svg.png -->
+          <img
+            class="yorha-mark-img"
+            src="img/loading.gif" 
+            alt=""
+            loading="eager"
+            decoding="async"
+          >
+          <div class="yorha-copy">
+            <div class="yorha-name">∷╎ᓭᓵ-⍊</div>
+            <!-- YoRHa -->
+            <div class="yorha-motto">For the Glory of Mankind</div>
+            <!-- For the Glory of Mankind -->
+          </div>
+        </div>
+      </div>
+
+    <div class="boot-content">
+      <h1 class="boot-title">
+        <span class="loading-line">
+          LOADING
+          <span class="boot-subline"><span class="dash">-</span> BOOTING SYSTEM</span>
+          <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        </span>
+        
+      </h1>
+
+      <div class="loader" aria-hidden="true"></div>
+
+      <section class="log-wrap" aria-label="Boot log">
+        <ul id="boot-list" class="log-list"></ul>
+      </section>
+    </div>
+    </main>
+
+    <script>
+      const listEl = document.getElementById("boot-list");
+      const sourceFile = "boot-sequence.txt";
+      const alternativeSourceFile = "boot-sequence-alternative.txt";
+      const isFileProtocol = window.location.protocol === "file:";
+      const replacementProbability = 0.1;
+      const typeDelay = 8;
+      const linePause = 20;
+      const linePauseVariance = 60;
+      const endPause = 520;
+      const lightFadePause = 1650;
+      const textFadePause = 900;
+      const redirectTarget = "pages/index.html";
+
+      const fallbackLines = [
+        "Commencing System Check",
+        "Memory Unit: Green",
+        "*Initializing Tactics Log",
+        "*Loading Geographic Data",
+        "*Vitals: Green",
+        "Remaining MP: 100%",
+        "Black Box Temperature: Normal",
+        "*Black Box Internal Pressure: Normal",
+        "*Activating IFF",
+        "*Activating FCS",
+        "*Initializing Pod Connection",
+        "*Launching DBU Setup",
+        "Activating Inertia Control System",
+        "*Activating Environmental Sensors",
+        "*Equipment Authentication: Complete",
+        "Equipment Status: Green",
+        "All Systems Green",
+        "Combat Preparations Complete"
+      ];
+
+      const fallbackAlternativeLines = [
+        "Reticulating splines!",
+        "Bugs Removed: 90%",
+        "Ceci n'est pas une boot screen!",
+        "20 GOTO 10!",
+        "Connection established!",
+        "한국 안녕하세요!",
+        "你好,中国！",
+        "Γεια σου Ελλάδα!",
+        "if not syntaxcheck then return end",
+        "Waiting ...",
+        "Upgrading Windows, your PC will restart several times. Sit back and relax.",
+        "rm -rf / . . . . . . . . . . DONE!",
+        "Switching Protocols",
+        "System Status: Temporary Redirect",
+        "Access Granted",
+        "Request Timeout: Try Again",
+        "Request Range Satisfied",
+        "Unprocessable Entity (Skipping)",
+        "Blocked by Windows Parental Controls (Skipping)",
+        "Internal Server Party",
+        "Hyper Gateway Timeout (Skipping)",
+        "SSL Handshake: Sufficient",
+        "Specimen Processed: Beginning Test",
+        "Activating Material Emancipation Grill",
+        "Quit now and cake will be served immediately.",
+        "Is anyone there?",
+        "It's been a long time. How have you been?"
+      ];
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      async function loadLinesFromFile(filePath, fallback = []) {
+        if (isFileProtocol) {
+          // file:// cannot fetch local text files due browser CORS rules
+          return fallback;
+        }
+        try {
+          const response = await fetch(filePath, { cache: "no-cache" });
+          if (!response.ok) throw new Error(`Failed to fetch ${filePath}`);
+          const text = await response.text();
+          const parsed = text
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+          return parsed.length ? parsed : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+
+      function resolveBootLines(baseLines, alternativeLines) {
+        return baseLines.map((line) => {
+          const marked = line.startsWith("*");
+          const cleanedLine = marked ? line.slice(1).trimStart() : line;
+
+          if (!marked || alternativeLines.length === 0) {
+            return cleanedLine;
+          }
+
+          if (Math.random() < replacementProbability) {
+            const altRaw = alternativeLines[Math.floor(Math.random() * alternativeLines.length)];
+            const altClean = altRaw.replace(/^\*\s*/, "").trim();
+            if (altClean.length > 0) {
+              return altClean;
+            }
+          }
+
+          return cleanedLine;
+        });
+      }
+
+      async function typeLine(text) {
+        const li = document.createElement("li");
+        li.className = "log-line";
+
+        const textNode = document.createElement("span");
+        const cursor = document.createElement("span");
+        cursor.className = "cursor";
+        cursor.textContent = "_";
+
+        li.append(textNode, cursor);
+        listEl.appendChild(li);
+
+        for (let i = 0; i <= text.length; i++) {
+          textNode.textContent = text.slice(0, i);
+          await sleep(typeDelay);
+        }
+
+        cursor.remove();
+        li.classList.add("done");
+        if(Math.random() > 0.9){
+          await sleep(2 * linePause + Math.random() * linePauseVariance * 8);
+        }else{
+          await sleep(linePause + Math.random() * linePauseVariance);
+        }
+      }
+
+      async function runBootSequence() {
+        const baseLines = await loadLinesFromFile(sourceFile, fallbackLines);
+        const alternativeLines = await loadLinesFromFile(alternativeSourceFile, fallbackAlternativeLines);
+        const lines = resolveBootLines(baseLines, alternativeLines);
+        for (const line of lines) {
+          await typeLine(line);
+        }
+
+        await sleep(endPause);
+        document.body.classList.add("phase-light");
+        // await sleep(lightFadePause);
+        document.body.classList.add("phase-empty");
+        await sleep(textFadePause);
+        window.location.replace(redirectTarget);
+      }
+
+      runBootSequence();
+    </script>
+  </body>
+</html>
