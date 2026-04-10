@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Website">
+    <title>Application-Specific Hardware Optimization using Virtual Prototypes | Jan Zielasko</title>
+    <link rel="stylesheet" href="style2.css">
+  </head>
+
+  <body class="research-page">
+    <div class="site-shell">
+      <main>
+        <section class="section" aria-labelledby="topic-title">
+          <div class="intro research-topic-intro">
+            <h1 class="page-title" id="topic-title">Application-Specific Hardware Optimization using Virtual Prototypes</h1>
+          </div>
+
+          <div class="research-overview-layout">
+            <aside class="research-action-links" aria-label="Topic resources">
+              <h2>Source Code:</h2>
+              <a class="social-button research-action-button research-action-primary" href="https://github.com/agra-uni-bremen/opt-vp" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">
+                <span class="social-icon research-action-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false"><path d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.3 9.4 7.88 10.93.58.11.79-.25.79-.56v-2.17c-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.69.08-.69 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.56-.29-5.26-1.29-5.26-5.73 0-1.27.45-2.31 1.19-3.12-.12-.3-.52-1.5.11-3.12 0 0 .97-.31 3.19 1.19a11.08 11.08 0 0 1 5.81 0c2.22-1.5 3.19-1.19 3.19-1.19.63 1.62.23 2.82.11 3.12.74.81 1.19 1.85 1.19 3.12 0 4.45-2.7 5.44-5.28 5.72.41.35.78 1.05.78 2.12v3.14c0 .31.21.67.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.66 18.35.5 12 .5z"/></svg>
+                </span>
+                <span>GitHub</span>
+              </a>
+              <div>
+                <h2>Read the Paper:</h2>
+                <p>
+                  <a class="social-button research-action-button" href="https://www.dfki.de/fileadmin/user_upload/import/16596_DATE_1380.pdf" target="_blank" rel="noopener noreferrer" aria-label="Read the DATE paper">
+                    <span>[DATE 2026]</span>
+                  </a>
+                  <a class="social-button research-action-button" href="https://ieeexplore.ieee.org/abstract/document/10272131" target="_blank" rel="noopener noreferrer" aria-label="Read the FDL paper">
+                    <span>[FDL 2023]</span>
+                  </a>
+                </p>
+              </div>
+            </aside>
+
+            <div class="research-main-overview">
+              <p class="lead">
+                Identifying the optimal hardware configuration for running complex workloads such as Neural Network (NN) inference on ultra-low-power edge devices is critical for reducing cost and maximizing performance. Tailoring hardware designs to specific applications significantly increases resource utilization, which is essential to meet the strict performance and energy constraints. 
+                Unfortunately, exploring the design space at the hardware-level is challenging due to the complexity and time-consuming nature of hardware design and verification processes. 
+                In this work, we present an analysis platform based on a RISC-V Virtual Prototype (VP) to systematically identify fine-grained hardware optimization opportunities. 
+                The VP models the entire hardware platform while remaining fast and accessible. 
+                Combined with a custom execution-trace compression and analysis framework, it enables the capture and processing of billions of executed instructions. 
+                Applied to a wide range of representative embedded and edge artificial intelligence workloads from the Embench and MLPerf Tiny benchmark suite, 
+                our approach successfully identifies promising optimization opportunities beyond the matrix multiplication kernel that are non-trivial to detect 
+                from either the source code or gate-level analysis.
+              </p>
+
+              <figure class="research-figure research-side-figure">
+                <img src="../img/OPT-overview.png" alt="Overview of the optimization and analysis tool workflow.">
+                <figcaption>Tool overview</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <h3 class="section-title research-subtitle">RISC-V</h3>
+          <p class="lead">
+            RISC-V is an open and modular instruction set architecture that is well suited for architecture exploration. 
+          </p>
+
+          <h3 class="section-title research-subtitle">Virtual Prototypes</h3>
+          <div>
+          <p class="lead">
+            Virtual Prototypes can model complete hardware platforms. 
+          </p>
+
+          <figure class="research-figure research-side-figure">
+            <img src="../img/VP-SystemC.png" alt="Overview of the virtual prototype architecture based on SystemC.">
+            <figcaption>Virtual prototype architecture based on SystemC.</figcaption>
+          </figure>
+          </div>
+
+          <p class="lead" style="margin-top: 20px;">
+            <a href="research.html">Back to research overview</a>
+          </p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>Jan Zielasko</span>
+        <span>·</span>
+        <a href="index.html">Home</a>
+        <a href="impressum.html">Impressum</a>
+      </footer>
+    </div>
+  </body>
+</html>
