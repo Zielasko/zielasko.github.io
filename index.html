@@ -57,6 +57,9 @@
       const endPause = 520;
       const lightFadePause = 1650;
       const textFadePause = 900;
+      const fastTypeDelay = 0;
+      const fastModeStep = 5;
+      const fastPauseMultiplier = 0.2;
       const redirectTarget = "pages/index.html";
 
       const fallbackLines = [
@@ -152,6 +155,17 @@
         });
       }
 
+      let isFastMode = false;
+
+      function setFastMode(active) {
+        isFastMode = active;
+      }
+
+      window.addEventListener("pointerdown", () => setFastMode(true));
+      window.addEventListener("pointerup", () => setFastMode(false));
+      window.addEventListener("pointercancel", () => setFastMode(false));
+      window.addEventListener("pointerleave", () => setFastMode(false));
+
       async function typeLine(text) {
         const li = document.createElement("li");
         li.className = "log-line";
@@ -164,17 +178,23 @@
         li.append(textNode, cursor);
         listEl.appendChild(li);
 
-        for (let i = 0; i <= text.length; i++) {
+        let i = 0;
+        while (i < text.length) {
+          const activeTypeDelay = isFastMode ? fastTypeDelay : typeDelay;
+          const step = isFastMode ? fastModeStep : 1;
+          i = Math.min(i + step, text.length);
           textNode.textContent = text.slice(0, i);
-          await sleep(typeDelay);
+          await sleep(activeTypeDelay);
         }
 
         cursor.remove();
         li.classList.add("done");
-        if(Math.random() > 0.9){
-          await sleep(2 * linePause + Math.random() * linePauseVariance * 8);
-        }else{
-          await sleep(linePause + Math.random() * linePauseVariance);
+        if (!isFastMode){
+          if(Math.random() > 0.9){
+            await sleep(2 * linePause + Math.random() * linePauseVariance * 8);
+          }else{
+            await sleep(linePause + Math.random() * linePauseVariance);
+          }
         }
       }
 
@@ -186,11 +206,12 @@
           await typeLine(line);
         }
 
-        await sleep(endPause);
+        const pauseMultiplier = isFastMode ? fastPauseMultiplier : 1;
+        await sleep(endPause * pauseMultiplier);
         document.body.classList.add("phase-light");
-        // await sleep(lightFadePause);
+        // await sleep(lightFadePause * pauseMultiplier);
         document.body.classList.add("phase-empty");
-        await sleep(textFadePause);
+        await sleep(textFadePause * pauseMultiplier);
         window.location.replace(redirectTarget);
       }
 
