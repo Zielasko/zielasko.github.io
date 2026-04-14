@@ -47,6 +47,7 @@
 
     <script>
       const listEl = document.getElementById("boot-list");
+      const mottoEl = document.querySelector(".yorha-motto");
       const sourceFile = "boot-sequence.txt";
       const alternativeSourceFile = "boot-sequence-alternative.txt";
       const isFileProtocol = window.location.protocol === "file:";
@@ -58,6 +59,21 @@
       const lightFadePause = 1650;
       const textFadePause = 900;
       const redirectTarget = "pages/index.html";
+
+      const fallbackMottos = [
+        "For the glory of Humanity.",
+        "Live long and profile.",
+        "The cake is in the kitchen.",
+        "Optimize your system. Now!",
+        "The truth is out there in the logs.",
+        "Rise and shine, Mr. Freeman!"
+      ];
+
+      const fallbackGlory = [
+        ("Mankind", 3),
+        ("Humanity", 5),
+        ("RISC-V", 1),
+      ];
 
       const fallbackLines = [
         "Commencing System Check",
@@ -152,6 +168,14 @@
         });
       }
 
+      function setRandomMotto(mottos) {
+        if (!mottoEl || !Array.isArray(mottos) || mottos.length === 0) {
+          return;
+        }
+        const randomMotto = mottos[Math.floor(Math.random() * mottos.length)];
+        mottoEl.textContent = randomMotto;
+      }
+
       async function typeLine(text) {
         const li = document.createElement("li");
         li.className = "log-line";
@@ -194,6 +218,7 @@
         window.location.replace(redirectTarget);
       }
 
+      setRandomMotto(fallbackMottos);
       runBootSequence();
     </script>
   </body>
