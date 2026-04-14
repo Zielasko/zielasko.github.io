@@ -58,30 +58,67 @@
       const endPause = 520;
       const lightFadePause = 1650;
       const textFadePause = 900;
+      const fastTypeDelay = 0;
+      const fastModeStep = 5;
+      const fastPauseMultiplier = 0.2;
       const redirectTarget = "pages/index.html";
+      const loadStableSeed = Math.floor(Math.random() * 1000000);
 
       const fallbackMottos = [
-        "For the glory of Humanity.",
-        "Live long and profile.",
-        "The cake is in the kitchen.",
-        "Optimize your system. Now!",
-        "The truth is out there in the logs.",
-        "Rise and shine, Mr. Freeman!"
+        { text: "Loading$      ", weight: 4 },
+        { text: "Have a §nice day!", weight: 8 },
+        { text: "$:) :) :) :) :) :) :) :)", weight: 2 },
+        { text: "$            ???            ", weight: 2 },
+        { text: "$___________________________", weight: 2 },
+        { text: "$Y9IU3HD2AWL5I0A91WDNFAL", weight: 2 },
+        { text: "Live long and $profile.", weight: 6 },
+        { text: "There is cake in the kitchen.", weight: 1 },
+        { text: "Optimize your system. §Now!", weight: 2 },
+        { text: "Rise and shine, §Mr.Freeman!", weight: 2 }
       ];
 
       const fallbackGlory = [
-        ("Mankind", 3),
-        ("Humanity", 5),
-        ("RISC-V", 1),
+        { text: "Mankind", weight: 2 },
+        { text: "Humanity", weight: 5 },
+        { text: "RISC-V", weight: 1 },
+      ];
+
+      const weightedMottoPool = [
+        ...fallbackMottos,
+        ...fallbackGlory.map((entry) => ({
+          text: `For the glory of $${entry.text}.`,
+          weight: entry.weight
+        }))
+      ];
+
+      const mottoScrambleGlyphSets = [
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        // "ᔑʖᓵ↸ᒷ⎓⊣⍑╎⋮ꖌꖎᒲリ𝙹!¡ᑑ∷ᓭℸ⚍⍊∴ ̇/||⨅",
+        // "ÅÄÆÇÈÉÊËÌÍÎÏÑÒÓÔÖØÙÚÛÜÝßàáâãäåæçèéêëìíîïñòóôöøùúûüýÿABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        // "☉☌☍☇☈☊☋☍☿♁♃♄♅♆♇✶✹✦✧✫✬✭0123456789",
+      ];
+      const mottoScrambleDelay = 30;
+      const mottoScrambleIterations = 60;
+      const mottoScrambleAmountMax = 12;
+      const mottoScrambleSettleAmountMax = 1;
+
+      const rarityColorWeights = [
+        { color: null, weight: 125 }, // no color
+        { color: "#55FF55", weight: 2 },
+        { color: "#55FFFF", weight: 2 },
+        { color: "#5555FF", weight: 1 },
+        { color: "#AA00AA", weight: 1 },
+        { color: "#FFAA00", weight: 1 },
+        { color: "#FF5555", weight: 1 }
       ];
 
       const fallbackLines = [
         "Commencing System Check",
-        "Memory Unit: Green",
+        "Memory Unit: §Green",
         "*Initializing Tactics Log",
         "*Loading Geographic Data",
-        "*Vitals: Green",
-        "Remaining MP: 100%",
+        "*Vitals: §Green",
+        "Remaining §MP: 100%",
         "Black Box Temperature: Normal",
         "*Black Box Internal Pressure: Normal",
         "*Activating IFF",
@@ -91,14 +128,14 @@
         "Activating Inertia Control System",
         "*Activating Environmental Sensors",
         "*Equipment Authentication: Complete",
-        "Equipment Status: Green",
-        "All Systems Green",
+        "Equipment Status: §Green",
+        "All Systems §Green",
         "Combat Preparations Complete"
       ];
 
       const fallbackAlternativeLines = [
         "Reticulating splines!",
-        "Bugs Removed: 90%",
+        "Bugs Removed: §90%",
         "Ceci n'est pas une boot screen!",
         "20 GOTO 10!",
         "Connection established!",
@@ -108,16 +145,17 @@
         "if not syntaxcheck then return end",
         "Waiting ...",
         "Upgrading Windows, your PC will restart several times. Sit back and relax.",
-        "rm -rf / . . . . . . . . . . DONE!",
+        "rm -rf / . . . . . . . . . . §DONE!",
         "Switching Protocols",
         "System Status: Temporary Redirect",
         "Access Granted",
         "Request Timeout: Try Again",
         "Request Range Satisfied",
-        "Unprocessable Entity (Skipping)",
-        "Blocked by Windows Parental Controls (Skipping)",
+        "Unprocessable Entity §(Skipping)",
+        "Blocked by Windows Parental Controls §(Skipping)",
         "Internal Server Party",
-        "Hyper Gateway Timeout (Skipping)",
+        "§I §n §t §e §r §n §a §l   §S §e §r §v §e §r   §P §a §r §t §y",
+        "Hyper Gateway Timeout §(Skipping)",
         "SSL Handshake: Sufficient",
         "Specimen Processed: Beginning Test",
         "Activating Material Emancipation Grill",
@@ -168,13 +206,314 @@
         });
       }
 
-      function setRandomMotto(mottos) {
-        if (!mottoEl || !Array.isArray(mottos) || mottos.length === 0) {
+      function pickWeightedEntry(entries) {
+        if (!Array.isArray(entries) || entries.length === 0) {
+          return null;
+        }
+
+        const sanitizedEntries = entries
+          .map((entry) => ({
+            ...entry,
+            weight: Number.isFinite(entry.weight) ? Math.max(0, entry.weight) : 0
+          }))
+          .filter((entry) => entry.weight > 0);
+
+        if (sanitizedEntries.length === 0) {
+          return entries[Math.floor(Math.random() * entries.length)] || null;
+        }
+
+        const totalWeight = sanitizedEntries.reduce((acc, entry) => acc + entry.weight, 0);
+        let threshold = Math.random() * totalWeight;
+
+        for (const entry of sanitizedEntries) {
+          threshold -= entry.weight;
+          if (threshold <= 0) {
+            return entry;
+          }
+        }
+
+        return sanitizedEntries[sanitizedEntries.length - 1] || null;
+      }
+
+      function getRandomMottoTemplate() {
+        const selectedMotto = pickWeightedEntry(weightedMottoPool);
+        return selectedMotto && selectedMotto.text ? selectedMotto.text : "For the glory of $Mankind.";
+      }
+
+      function getRandomGlyph(glyphPool) {
+        return glyphPool.charAt(Math.floor(Math.random() * glyphPool.length));
+      }
+
+      function applyGlyphCase(glyph, originalChar) {
+        if (/[a-z]/.test(originalChar)) {
+          return glyph.toLowerCase();
+        }
+        if (/[A-Z]/.test(originalChar)) {
+          return glyph.toUpperCase();
+        }
+        return glyph;
+      }
+
+      function isScrambleTargetChar(char) {
+        return char !== "§" && char !== "." && char !== "!"; // && /[A-Za-z0-9]/.test(char) // include everything for now
+      }
+
+      function createInitialScrambleState(text, glyphPool) {
+        const chars = text.split("");
+        const mutableIndices = [];
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (!isScrambleTargetChar(char)) {
+            continue;
+          }
+
+          mutableIndices.push(i);
+          chars[i] = applyGlyphCase(getRandomGlyph(glyphPool), char);
+        }
+
+        return { chars, mutableIndices };
+      }
+
+      function mutateScrambleState(chars, mutableIndices, originalText, glyphPool) {
+        if (mutableIndices.length === 0) {
           return;
         }
-        const randomMotto = mottos[Math.floor(Math.random() * mottos.length)];
-        mottoEl.textContent = randomMotto;
+
+        const maxPerFrame = Math.max(1, Math.min(mottoScrambleAmountMax, Math.floor(mutableIndices.length / 3)));
+        const scrambleCount = Math.min(
+          mutableIndices.length,
+          1 + Math.floor(Math.random() * maxPerFrame)
+        );
+
+        const shuffledIndices = mutableIndices.slice();
+        for (let i = 0; i < scrambleCount; i++) {
+          const swapIndex = i + Math.floor(Math.random() * (shuffledIndices.length - i));
+          [shuffledIndices[i], shuffledIndices[swapIndex]] = [shuffledIndices[swapIndex], shuffledIndices[i]];
+
+          const indexToScramble = shuffledIndices[i];
+          chars[indexToScramble] = applyGlyphCase(
+            getRandomGlyph(glyphPool),
+            originalText[indexToScramble]
+          );
+        }
       }
+
+      function settleScrambleState(chars, unresolvedIndicesSet, originalText) {
+        if (!unresolvedIndicesSet || unresolvedIndicesSet.size === 0) {
+          return true;
+        }
+
+        const unresolvedIndices = Array.from(unresolvedIndicesSet);
+        const maxPerFrame = Math.max(0, Math.min(mottoScrambleSettleAmountMax, Math.floor(unresolvedIndices.length / 2)));
+        const settleCount = Math.min(
+          unresolvedIndices.length,
+          1 + Math.floor(Math.random() * maxPerFrame)
+        );
+
+        for (let i = 0; i < settleCount; i++) {
+          const swapIndex = i + Math.floor(Math.random() * (unresolvedIndices.length - i));
+          [unresolvedIndices[i], unresolvedIndices[swapIndex]] = [unresolvedIndices[swapIndex], unresolvedIndices[i]];
+
+          const indexToSettle = unresolvedIndices[i];
+          chars[indexToSettle] = originalText[indexToSettle];
+          unresolvedIndicesSet.delete(indexToSettle);
+        }
+
+        return unresolvedIndicesSet.size === 0;
+      }
+
+      function getRaritySeed(text) {
+        let hash = 0;
+        for (let i = 0; i < text.length; i++) {
+          hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+        }
+        return hash;
+      }
+
+      function pickWeightedRarityColor(seedValue, wordLength) {
+        const sanitized = rarityColorWeights
+          .map((entry) => ({
+            color: entry.color,
+            weight: Number.isFinite(entry.weight) ? Math.max(0, entry.weight) : 0
+          }))
+          .filter((entry) => entry.weight > 0);
+
+        if (sanitized.length === 0) {
+          return null;
+        }
+
+        //remove null color for one letter words to guarantee coloring
+        //null is always the first element
+        if(wordLength === 1){
+          sanitized.shift();
+        }
+
+        const totalWeight = sanitized.reduce((acc, entry) => acc + entry.weight, 0);
+        let threshold = (seedValue >>> 0) % totalWeight;
+
+        for (const entry of sanitized) {
+          if (threshold < entry.weight) {
+            return entry.color;
+          }
+          threshold -= entry.weight;
+        }
+
+        return sanitized[sanitized.length - 1].color;
+      }
+
+      function buildRarityFragment(rawText) {
+        const fragment = document.createDocumentFragment();
+        let colorIndex = 0;
+        let i = 0;
+
+        while (i < rawText.length) {
+          const markerIndex = rawText.indexOf("§", i);
+          if (markerIndex === -1) {
+            fragment.appendChild(document.createTextNode(rawText.slice(i)));
+            break;
+          }
+
+          if (markerIndex > i) {
+            fragment.appendChild(document.createTextNode(rawText.slice(i, markerIndex)));
+          }
+
+          i = markerIndex + 1;
+
+          while (i < rawText.length && /\s/.test(rawText[i])) {
+            fragment.appendChild(document.createTextNode(rawText[i]));
+            i++;
+          }
+
+          const wordStart = i;
+          while (i < rawText.length && !/\s/.test(rawText[i])) {
+            i++;
+          }
+
+          const word = rawText.slice(wordStart, i);
+          if (word.length > 0) {
+            const colorSeed = getRaritySeed(word) + colorIndex + loadStableSeed;
+            const color = pickWeightedRarityColor(colorSeed, word.length);
+
+            if (color) {
+              const raritySpan = document.createElement("span");
+              raritySpan.style.color = color;
+              raritySpan.textContent = word;
+              fragment.appendChild(raritySpan);
+            } else {
+              fragment.appendChild(document.createTextNode(word));
+            }
+
+            colorIndex++;
+          }
+        }
+
+        return fragment;
+      }
+
+      function setStyledText(targetEl, rawText) {
+        if (!targetEl) {
+          return;
+        }
+        targetEl.replaceChildren(buildRarityFragment(rawText));
+      }
+
+      function getVisibleTextLength(rawText) {
+        return rawText.replace(/§/g, "").length;
+      }
+
+      function setStyledMottoWithFixedSuffix(prefix, suffixText, suffixTemplate) {
+        if (!mottoEl) {
+          return;
+        }
+
+        mottoEl.replaceChildren();
+        mottoEl.appendChild(document.createTextNode(prefix));
+
+        const suffixSpan = document.createElement("span");
+        suffixSpan.className = "yorha-motto-suffix";
+        const suffixLength = Math.max(1, getVisibleTextLength(suffixTemplate || suffixText));
+        suffixSpan.style.setProperty("--motto-suffix-ch", String(suffixLength));
+        suffixSpan.replaceChildren(buildRarityFragment(suffixText));
+        mottoEl.appendChild(suffixSpan);
+      }
+
+      let mottoAnimationInterval = null;
+
+      function animateMottoSuffix(prefix, suffix) {
+        if (!mottoEl) {
+          return;
+        }
+
+        if (mottoAnimationInterval) {
+          clearInterval(mottoAnimationInterval);
+          mottoAnimationInterval = null;
+        }
+
+        if (!suffix) {
+          setStyledText(mottoEl, prefix);
+          return;
+        }
+
+        let iteration = 0;
+        let isSettling = false;
+        const glyphPool = mottoScrambleGlyphSets[Math.floor(Math.random() * mottoScrambleGlyphSets.length)] || mottoScrambleGlyphSets[0];
+        const scrambleState = createInitialScrambleState(suffix, glyphPool);
+        const unsettledIndices = new Set(scrambleState.mutableIndices);
+        setStyledMottoWithFixedSuffix(prefix, scrambleState.chars.join(""), suffix);
+
+        mottoAnimationInterval = setInterval(() => {
+          if (!isSettling) {
+            iteration++;
+            if (iteration >= mottoScrambleIterations) {
+              isSettling = true;
+            } else {
+              mutateScrambleState(scrambleState.chars, scrambleState.mutableIndices, suffix, glyphPool);
+            }
+          }
+
+          if (isSettling) {
+            const isDone = settleScrambleState(scrambleState.chars, unsettledIndices, suffix);
+            if (isDone) {
+              clearInterval(mottoAnimationInterval);
+              mottoAnimationInterval = null;
+              setStyledMottoWithFixedSuffix(prefix, suffix, suffix);
+              return;
+            }
+          }
+
+          setStyledMottoWithFixedSuffix(prefix, scrambleState.chars.join(""), suffix);
+        }, mottoScrambleDelay);
+      }
+
+      function setRandomMotto() {
+        if (!mottoEl) {
+          return;
+        }
+
+        const template = getRandomMottoTemplate();
+        const markerIndex = template.indexOf("$");
+        if (markerIndex === -1) {
+          setStyledText(mottoEl, template);
+          return;
+        }
+
+        const prefix = template.slice(0, markerIndex);
+        const suffix = template.slice(markerIndex + 1);
+        animateMottoSuffix(prefix, suffix);
+      }
+
+
+      let isFastMode = false;
+
+      function setFastMode(active) {
+        isFastMode = active;
+      }
+
+      window.addEventListener("pointerdown", () => setFastMode(true));
+      window.addEventListener("pointerup", () => setFastMode(false));
+      window.addEventListener("pointercancel", () => setFastMode(false));
+      window.addEventListener("pointerleave", () => setFastMode(false));
 
       async function typeLine(text) {
         const li = document.createElement("li");
@@ -188,17 +527,23 @@
         li.append(textNode, cursor);
         listEl.appendChild(li);
 
-        for (let i = 0; i <= text.length; i++) {
-          textNode.textContent = text.slice(0, i);
-          await sleep(typeDelay);
+        let i = 0;
+        while (i < text.length) {
+          const activeTypeDelay = isFastMode ? fastTypeDelay : typeDelay;
+          const step = isFastMode ? fastModeStep : 1;
+          i = Math.min(i + step, text.length);
+          setStyledText(textNode, text.slice(0, i));
+          await sleep(activeTypeDelay);
         }
 
         cursor.remove();
         li.classList.add("done");
-        if(Math.random() > 0.9){
-          await sleep(2 * linePause + Math.random() * linePauseVariance * 8);
-        }else{
-          await sleep(linePause + Math.random() * linePauseVariance);
+        if (!isFastMode){
+          if(Math.random() > 0.9){
+            await sleep(2 * linePause + Math.random() * linePauseVariance * 8);
+          }else{
+            await sleep(linePause + Math.random() * linePauseVariance);
+          }
         }
       }
 
@@ -210,15 +555,16 @@
           await typeLine(line);
         }
 
-        await sleep(endPause);
+        const pauseMultiplier = isFastMode ? fastPauseMultiplier : 1;
+        await sleep(endPause * pauseMultiplier);
         document.body.classList.add("phase-light");
-        // await sleep(lightFadePause);
+        // await sleep(lightFadePause * pauseMultiplier);
         document.body.classList.add("phase-empty");
-        await sleep(textFadePause);
+        await sleep(textFadePause * pauseMultiplier);
         window.location.replace(redirectTarget);
       }
 
-      setRandomMotto(fallbackMottos);
+      setRandomMotto();
       runBootSequence();
     </script>
   </body>
